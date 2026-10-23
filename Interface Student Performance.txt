@@ -1,0 +1,234 @@
+# Student Performance Predictor with Glassmorphism Effect and Scroll Fix
+import tkinter as tk
+from tkinter import messagebox, ttk
+import joblib
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+import time
+from ttkthemes import ThemedTk
+import random
+import winsound
+import threading
+from PIL import Image, ImageTk, ImageFilter, ImageDraw
+
+# Load the pre-trained model
+model = joblib.load(r"D:\ayoub\OneDrive - Université Mohammed VI Polytechnique\Desktop\Student performance prediction\best_svr_model.joblib")
+
+# Define the label encoders for the final categorical features
+label_encoders = {}
+encoding_options = {
+    'Parental_Involvement_encoded': ['Low', 'Medium', 'High'],
+    'Access_to_Resources_encoded': ['Low', 'Medium', 'High'],
+    'Extracurricular_Activities_encoded': ['Yes', 'No'],
+    'Motivation_Level_encoded': ['Low', 'Medium', 'High'],
+    'Internet_Access_encoded': ['Yes', 'No'],
+    'Teacher_Quality_encoded': ['Low', 'Medium', 'High'],
+    'School_Type_encoded': ['Public', 'Private'],
+    'Peer_Influence_encoded': ['Positive', 'Neutral', 'Negative'],
+    'Parental_Education_Level_encoded': ['High School', 'College', 'Postgraduate'],
+    'Distance_from_Home_encoded': ['Near', 'Moderate', 'Far']
+}
+
+# Fit the encoders
+for feature, options in encoding_options.items():
+    encoder = LabelEncoder()
+    encoder.fit(options)
+    label_encoders[feature] = encoder
+
+# Create the main window
+root = ThemedTk(theme="breeze")
+root.title("Student Performance Predictor")
+root.geometry("900x700")
+
+# Add background image
+bg_image = Image.open(r"C:\Users\ayoub\Downloads\ChatGPT Image 13 mai 2025, 11_49_27.png")
+bg_image = bg_image.resize((900, 700), Image.Resampling.LANCZOS)
+bg_photo = ImageTk.PhotoImage(bg_image)
+background_label = tk.Label(root, image=bg_photo)
+background_label.place(relwidth=1, relheight=1)
+
+# Create scrollable glassmorphism panel
+glass_frame = tk.Frame(root, bg="#ffffff", bd=0, highlightthickness=0)
+canvas = tk.Canvas(glass_frame, bg="#ffffff", bd=0, highlightthickness=0)
+scrollbar = ttk.Scrollbar(glass_frame, orient="vertical", command=canvas.yview)
+scrollable_frame = tk.Frame(canvas, bg="#ffffff")
+
+scrollable_frame.bind(
+    "<Configure>",
+    lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+)
+
+canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+canvas.configure(yscrollcommand=scrollbar.set)
+
+glass_frame.place(relx=0.5, rely=0.5, anchor="center", width=800, height=600)
+canvas.pack(side="left", fill="both", expand=True)
+scrollbar.pack(side="right", fill="y")
+
+# Header with custom font and animation
+header_font = ("Ink Free", 36, "bold")
+header = tk.Label(scrollable_frame, text="📊 Student Performance Predictor", font=header_font, fg="#007BFF", bg="#ffffff")
+header.pack(pady=20)
+
+# Input fields
+labels = [
+    "Hours_Studied", "Attendance", "Sleep_Hours", "Previous_Scores", "Tutoring_Sessions", "Physical_Activity",
+    *encoding_options.keys()
+]
+entries = {}
+
+style = ttk.Style()
+style.configure("TLabel", font=("Calibri", 16), background="#ffffff", foreground="#333")
+style.configure("TButton", font=("Calibri", 18, "bold"), background="#007BFF", foreground="white")
+style.configure("TEntry", font=("Calibri", 16), background="white", foreground="#333")
+style.configure("TCombobox", font=("Calibri", 16), background="white", foreground="#333")
+
+# Add sliders for numerical fields and dropdowns for categorical fields
+numerical_ranges = {
+    "Hours_Studied": (0, 40),
+    "Attendance": (0, 100),
+    "Sleep_Hours": (0, 24),
+    "Previous_Scores": (0, 100),
+    "Tutoring_Sessions": (0, 10),
+    "Physical_Activity": (0, 10)
+}
+
+for label in labels:
+    ttk.Label(scrollable_frame, text=label.replace("_encoded", ""), style="TLabel").pack(pady=5)
+    if label in numerical_ranges:
+        # Create sliders for numerical features
+        frame = tk.Frame(scrollable_frame, bg="#ffffff")
+        frame.pack(pady=5)
+
+        var = tk.DoubleVar()
+        slider = ttk.Scale(frame, from_=numerical_ranges[label][0], to=numerical_ranges[label][1],
+                        orient="horizontal", length=300, variable=var)
+        slider.pack(side="left", padx=(0, 10))
+
+        # Label pour afficher la valeur arrondie
+        int_label_var = tk.StringVar()
+        int_label_var.set(str(int(var.get())))
+
+        value_label = tk.Label(frame, textvariable=int_label_var, font=("Calibri", 14), bg="#ffffff", fg="#007BFF")
+        value_label.pack(side="left")
+
+        # Fonction de mise à jour lors du mouvement du slider
+        def update_label(val, v=var, lv=int_label_var):
+            lv.set(str(int(float(val))))
+
+        slider.config(command=update_label)
+
+        entries[label] = var
+
+
+    elif label in encoding_options:
+        # Create dropdowns for categorical features
+        var = tk.StringVar(scrollable_frame)
+        var.set(encoding_options[label][0])  # Default value
+        dropdown = ttk.Combobox(scrollable_frame, textvariable=var, values=encoding_options[label], state="readonly", width=35)
+        dropdown.pack(pady=5)
+        entries[label] = var
+
+# Prediction function
+def predict_score():
+    try:
+        # Prepare the input data
+        data = {}
+        for feature in labels:
+            value = entries[feature].get()
+            if feature in encoding_options:
+                # Encode categorical features
+                data[feature] = label_encoders[feature].transform([value])[0]
+            else:
+                # Convert numerical features to float
+                data[feature] = float(value)
+        
+        # Create a DataFrame
+        df = pd.DataFrame([data])
+        
+        # Scale numerical features
+        numerical_features = ['Hours_Studied', 'Attendance', 'Sleep_Hours', 'Previous_Scores', 'Tutoring_Sessions', 'Physical_Activity']
+        df[numerical_features] = StandardScaler().fit_transform(df[numerical_features])
+        
+        # Make prediction
+        prediction = model.predict(df)[0]
+        messagebox.showinfo("🎯 Predicted Score", f"Predicted Exam Score: {prediction:.2f}")
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred: {e}")
+
+# Predict button
+predict_button = ttk.Button(scrollable_frame, text="🎯 Predict Score", style="TButton", command=predict_score)
+predict_button.pack(pady=30)
+from tkinter import filedialog
+
+# === TABLEAU POUR AFFICHER LES PRÉDICTIONS MULTIPLES ===
+tree_frame = tk.Frame(scrollable_frame, bg="#ffffff")
+tree_frame.pack(pady=20, fill="both", expand=True)
+
+tree_scroll = ttk.Scrollbar(tree_frame)
+tree_scroll.pack(side="right", fill="y")
+
+tree = ttk.Treeview(tree_frame, yscrollcommand=tree_scroll.set, columns=("Index", "Predicted Score"), show="headings", height=10)
+tree.heading("Index", text="Index Étudiant")
+tree.heading("Predicted Score", text="Score Prévu")
+tree.column("Index", anchor="center", width=120)
+tree.column("Predicted Score", anchor="center", width=150)
+tree.pack(fill="both", expand=True)
+tree_scroll.config(command=tree.yview)
+
+def load_and_predict_batch():
+    file_path = filedialog.askopenfilename(filetypes=[("Fichiers Excel/CSV", "*.xlsx *.xls *.csv")])
+    if not file_path:
+        return
+
+    try:
+        # Lire le fichier
+        if file_path.endswith(".csv"):
+            df = pd.read_csv(file_path)
+        else:
+            df = pd.read_excel(file_path)
+
+        # Vérifier colonnes nécessaires
+        required_columns = list(numerical_ranges.keys()) + list(encoding_options.keys())
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            messagebox.showerror("Erreur", f"Colonnes manquantes : {', '.join(missing_columns)}")
+            return
+
+        # Supprimer les lignes avec données manquantes
+        df_clean = df.dropna(subset=required_columns)
+
+        # Encoder les colonnes catégorielles
+        for cat_col in encoding_options.keys():
+            if cat_col in df_clean.columns:
+                df_clean[cat_col] = df_clean[cat_col].map(lambda x: label_encoders[cat_col].transform([x])[0] if x in label_encoders[cat_col].classes_ else None)
+
+        df_clean = df_clean.dropna()  # Supprimer si l'encodage a échoué
+
+        # Normaliser les colonnes numériques
+        scaler = StandardScaler()
+        df_clean[list(numerical_ranges.keys())] = scaler.fit_transform(df_clean[list(numerical_ranges.keys())])
+
+
+        # Prédictions
+        predictions = model.predict(df_clean)
+
+        # Nettoyer tableau avant ajout
+        for row in tree.get_children():
+            tree.delete(row)
+
+        # Ajouter résultats
+        for i, score in enumerate(predictions):
+            tree.insert("", "end", values=(i + 1, f"{score:.2f}"))
+
+        messagebox.showinfo("Succès", f"{len(predictions)} scores prédits avec succès.")
+    except Exception as e:
+        messagebox.showerror("Erreur", f"Erreur pendant l'import ou la prédiction :\n{str(e)}")
+
+# === BOUTON POUR IMPORTATION DU FICHIER CSV/XLSX ===
+import_button = ttk.Button(scrollable_frame, text="📥 Importer CSV/XLSX pour plusieurs étudiants", style="TButton", command=load_and_predict_batch)
+import_button.pack(pady=10)
+
+# Run the main loop
+root.mainloop()
+
