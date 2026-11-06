@@ -166,7 +166,7 @@ st.markdown(
     <section class="hero">
       <div class="hero-text">
         <span class="eyebrow"><span class="eyebrow-dot"></span> MACHINE LEARNING · EDUCATION ANALYTICS</span>
-        <h1>Student Performance <span>Studio</span></h1>
+        <h1>Student Performance <span>Prediction</span></h1>
         <p>Explore the factors behind predicted exam outcomes in an interactive,
            model-powered learning analytics workspace.</p>
         <div class="hero-chips"><span>SVR regression</span><span>16 inputs</span><span>Interactive what-if analysis</span></div>
