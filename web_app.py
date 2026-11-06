@@ -171,11 +171,6 @@ st.markdown(
            model-powered learning analytics workspace.</p>
         <div class="hero-chips"><span>SVR regression</span><span>16 inputs</span><span>Interactive what-if analysis</span></div>
       </div>
-      <div class="hero-art" aria-hidden="true">
-        <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
-        <div class="art-card"><span class="art-icon">✦</span><div><b>AI</b><small>Prediction lab</small></div></div>
-        <div class="spark spark-a">✳</div><div class="spark spark-b">✦</div>
-      </div>
     </section>
     """,
     unsafe_allow_html=True,
