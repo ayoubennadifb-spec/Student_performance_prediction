@@ -1,4 +1,4 @@
-"""Student Performance Studio — portfolio-friendly web interface.
+"""Student Performance Prediction — portfolio-friendly web interface.
 
 The original Tkinter application remains untouched as interface.py.
 Predictions are generated with the repository's trained SVR model.
@@ -22,7 +22,7 @@ MODEL_PATH = ROOT / "best_svr_model.joblib"
 DATA_PATH = ROOT / "StudentPerformanceFactors.xlsx"
 
 st.set_page_config(
-    page_title="Student Performance Studio | AI Predictions",
+    page_title="Student Performance Prediction | AI Predictions",
     page_icon="🎓",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -170,11 +170,6 @@ st.markdown(
         <p>Explore the factors behind predicted exam outcomes in an interactive,
            model-powered learning analytics workspace.</p>
         <div class="hero-chips"><span>SVR regression</span><span>16 inputs</span><span>Interactive what-if analysis</span></div>
-      </div>
-      <div class="hero-art" aria-hidden="true">
-        <div class="orbit orbit-one"></div><div class="orbit orbit-two"></div>
-        <div class="art-card"><span class="art-icon">✦</span><div><b>AI</b><small>Prediction lab</small></div></div>
-        <div class="spark spark-a">✳</div><div class="spark spark-b">✦</div>
       </div>
     </section>
     """,
