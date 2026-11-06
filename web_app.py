@@ -22,7 +22,7 @@ MODEL_PATH = ROOT / "best_svr_model.joblib"
 DATA_PATH = ROOT / "StudentPerformanceFactors.xlsx"
 
 st.set_page_config(
-    page_title="Student Performance Studio | AI Predictions",
+    page_title="Student Performance Prediction | AI Predictions",
     page_icon="🎓",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -298,11 +298,20 @@ with tabs[1]:
                 samples = [{**current, "Hours_Studied": h} for h in sampled_hours]
                 vals = predict_many(pd.DataFrame(samples), predictor)
                 chart = pd.DataFrame({"Hours/week": sampled_hours, "Predicted score": vals})
-                fig = alt.Chart(chart).mark_line(point=True, strokeWidth=3, color="#6560D9").encode(
-                    x=alt.X("Hours/week:Q", scale=alt.Scale(domain=[0, 44])),
-                    y=alt.Y("Predicted score:Q", scale=alt.Scale(zero=False)),
+                fig = alt.Chart(chart).mark_line(
+                    point=alt.OverlayMarkDef(filled=True, size=65, fill="#FFFFFF", stroke="#6268D8", strokeWidth=2),
+                    strokeWidth=3, color="#6268D8", interpolate="monotone"
+                ).encode(
+                    x=alt.X("Hours/week:Q", title="Study hours per week", scale=alt.Scale(domain=[0, 44])),
+                    y=alt.Y("Predicted score:Q", title="Predicted exam score", scale=alt.Scale(zero=False, padding=16)),
                     tooltip=[alt.Tooltip("Hours/week:Q"), alt.Tooltip("Predicted score:Q", format=".2f")]
-                ).properties(height=245)
+                ).properties(height=230).configure_view(stroke=None).configure(
+                    background="#FFFFFF"
+                ).configure_axis(
+                    labelColor="#68768E", titleColor="#68768E", gridColor="#EDF0F6",
+                    domain=False, tickColor="#E5EAF2", labelFontSize=11, titleFontSize=11,
+                    labelPadding=9, titlePadding=13
+                )
                 st.altair_chart(fig, use_container_width=True)
         with right:
             with st.container(border=True):
@@ -312,13 +321,19 @@ with tabs[1]:
                 vals = predict_many(pd.DataFrame(samples), predictor)
                 chart = pd.DataFrame({"Attendance (%)": sampled_attendance, "Predicted score": vals})
                 fig = alt.Chart(chart).mark_area(
-                    line={"color": "#20A8A0", "strokeWidth": 3},
-                    color="#A7E8DE", opacity=0.8
+                    line={"color": "#20AFA5", "strokeWidth": 3},
+                    color="#B8EEE6", opacity=0.55, interpolate="monotone"
                 ).encode(
-                    x=alt.X("Attendance (%):Q", scale=alt.Scale(domain=[0, 100])),
-                    y=alt.Y("Predicted score:Q", scale=alt.Scale(zero=False)),
+                    x=alt.X("Attendance (%):Q", title="Attendance (%)", scale=alt.Scale(domain=[0, 100])),
+                    y=alt.Y("Predicted score:Q", title="Predicted exam score", scale=alt.Scale(zero=False, padding=16)),
                     tooltip=[alt.Tooltip("Attendance (%):Q"), alt.Tooltip("Predicted score:Q", format=".2f")]
-                ).properties(height=245)
+                ).properties(height=230).configure_view(stroke=None).configure(
+                    background="#FFFFFF"
+                ).configure_axis(
+                    labelColor="#68768E", titleColor="#68768E", gridColor="#EDF0F6",
+                    domain=False, tickColor="#E5EAF2", labelFontSize=11, titleFontSize=11,
+                    labelPadding=9, titlePadding=13
+                )
                 st.altair_chart(fig, use_container_width=True)
     except Exception as exc:
         st.error(f"Scenario could not be calculated: {exc}")
@@ -392,5 +407,5 @@ with tabs[3]:
     st.write("The original desktop Tkinter application and research notebooks remain available in the repository.")
     st.link_button("↗ View GitHub source", "https://github.com/ayoubennadifb-spec/Student_performance_prediction")
 
-st.markdown('<div class="footer">STUDENT PERFORMANCE STUDIO <span>Educational ML portfolio demo · no personal student records stored</span></div>',
+st.markdown('<div class="footer">STUDENT PERFORMANCE PREDICTION <span>Educational ML portfolio demo · no personal student records stored</span></div>',
             unsafe_allow_html=True)
